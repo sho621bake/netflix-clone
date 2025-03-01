@@ -1,0 +1,45 @@
+---
+import MainLayout from "@/layouts/MainLayout.astro";
+import HeroBanner from '@/components/movie/HeroBanner'
+import MovieRow from '@/components/movie/MovieRow'
+import { getMoviesByCategory } from "@/lib/api/tmdb";
+import "../styles/global.css";
+
+
+
+const trendingMovies = await getMoviesByCategory("trending");
+const popularMovies = await getMoviesByCategory("popular");
+const topRatedMovies = await getMoviesByCategory("top_rated");
+const upcomingMovies = await getMoviesByCategory("upcoming");
+
+const heroMovie = trendingMovies.results[Math.floor(Math.random() * 10)]
+---
+
+<MainLayout title="ホーム">
+	<HeroBanner movie={heroMovie}/>
+	<div class="px-8 md:px-16 mt-8 max-w-7xl mx-auto">
+    <MovieRow
+      title="トレンド"
+			movies={trendingMovies.results}
+			client:visible
+    />
+    
+    <MovieRow
+      title="人気の映画"
+      movies={popularMovies.results}
+      client:visible
+    />
+    
+    <MovieRow
+      title="高評価の映画"
+      movies={topRatedMovies.results}
+      client:visible
+    />
+    
+    <MovieRow
+      title="近日公開"
+      movies={upcomingMovies.results}
+      client:visible
+    />
+  </div>
+</MainLayout>

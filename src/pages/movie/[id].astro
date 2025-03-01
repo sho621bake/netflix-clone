@@ -1,0 +1,230 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro';
+import MovieRow from '../../components/movie/MovieRow';
+import { Button } from '../../components/ui/button';
+import { getMovieDetails, getImageUrl, getMoviesByCategory } from '../../lib/api/tmdb';
+import { Play, Plus, ThumbsUp } from 'lucide-react';
+import "@/styles/global.css";
+
+// URLパラメータから映画IDを取得
+const { id } = Astro.params;
+const movieId = parseInt(id || '0');
+
+// IDが有効でない場合は404
+if (!movieId || isNaN(movieId)) {
+  return Astro.redirect('/404');
+}
+
+// 変数の初期化
+let movie;
+let backdropUrl;
+let posterUrl;
+let releaseYear;
+let trailer;
+let similarMovies = [];
+
+try {
+  // 映画詳細情報を取得
+  movie = await getMovieDetails(movieId);
+  
+  if (!movie) {
+    console.error('Movie not found');
+    return Astro.redirect('/404');
+  }
+
+  // 背景画像とポスター画像のURLを生成
+  backdropUrl = getImageUrl(movie.backdrop_path, 'original');
+  posterUrl = getImageUrl(movie.poster_path, 'w500');
+  
+  // 公開年を取得
+  releaseYear = movie.release_date ? new Date(movie.release_date).getFullYear() : '';
+  
+  // トレーラーを取得（YouTubeのみ）
+  trailer = movie.videos?.results?.find(
+    video => video.site === 'YouTube' && (video.type === 'Trailer' || video.type === 'Teaser')
+  );
+  
+  // 類似映画
+  similarMovies = movie.similar?.results || [];
+  
+} catch (error) {
+  console.error('Failed to fetch movie details:', error);
+  return Astro.redirect('/404');
+}
+
+// 上映時間をフォーマット
+const formatRuntime = (minutes:number) => {
+  if (!minutes) return '';
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return `${hours}時間 ${mins}分`;
+};
+---
+
+<MainLayout title={movie.title}>
+  <div class="relative pt-16">
+    <!-- ヒーローセクション -->
+    <div class="relative h-[70vh] w-full">
+      <!-- 背景画像 -->
+      <div 
+        class="absolute inset-0 bg-cover bg-center"
+        style={backdropUrl ? { backgroundImage: `url(${backdropUrl})` } : { backgroundColor: '#111' }}
+      >
+        <!-- グラデーションオーバーレイ -->
+        <div class="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-transparent"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent"></div>
+      </div>
+      
+      <!-- 映画情報 -->
+      <div class="relative h-full flex items-center">
+        <div class="px-8 md:px-16 max-w-7xl mx-auto flex flex-col md:flex-row gap-8">
+          <!-- ポスター画像 -->
+          <div class="hidden md:block w-64 shrink-0">
+            {posterUrl ? (
+              <img 
+                src={posterUrl} 
+                alt={movie.title}
+                class="w-full rounded-md shadow-2xl"
+              />
+            ) : (
+              <div class="w-full aspect-[2/3] bg-gray-800 rounded-md flex items-center justify-center">
+                <span class="text-gray-400">{movie.title}</span>
+              </div>
+            )}
+          </div>
+          
+          <!-- 詳細情報 -->
+          <div class="flex flex-col">
+            <h1 class="text-4xl md:text-5xl font-bold text-white mb-2">
+              {movie.title} {releaseYear && <span class="text-gray-300">({releaseYear})</span>}
+            </h1>
+            
+            {movie.tagline && (
+              <p class="text-xl text-gray-300 italic mb-4">{movie.tagline}</p>
+            )}
+            
+            <div class="flex items-center gap-4 text-sm text-gray-300 mb-6">
+              {movie.runtime > 0 && <span>{formatRuntime(movie.runtime)}</span>}
+              <span class="flex items-center">
+                <span class="inline mr-1">★</span> {movie.vote_average?.toFixed(1)}
+              </span>
+            </div>
+            
+            <div class="flex flex-wrap gap-2 mb-6">
+              {movie.genres?.map(genre => (
+                <span class="px-3 py-1 bg-gray-800/80 text-white text-sm rounded-full">
+                  {genre.name}
+                </span>
+              ))}
+            </div>
+            
+            <p class="text-white max-w-2xl mb-8">
+              {movie.overview}
+            </p>
+            
+            <div class="flex flex-wrap gap-4">
+              {trailer && (
+                <a 
+                  href={`https://www.youtube.com/watch?v=${trailer.key}`} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-white text-black hover:bg-white/90 h-10 px-4 py-2"
+                >
+                  <span class="mr-2">▶</span>
+                  トレーラーを再生
+                </a>
+              )}
+              
+              <button 
+                class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 text-white"
+              >
+                <span class="mr-2">+</span>
+                マイリストに追加
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- キャスト情報 -->
+    {movie.credits?.cast?.length > 0 && (
+      <div class="px-8 md:px-16 py-12 max-w-7xl mx-auto">
+        <h2 class="text-2xl font-bold text-white mb-6">キャスト</h2>
+        
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+          {movie.credits.cast.slice(0, 6).map(person => (
+            <div class="bg-gray-800/50 rounded-lg overflow-hidden">
+              {person.profile_path ? (
+                <img 
+                  src={getImageUrl(person.profile_path, 'w185')} 
+                  alt={person.name}
+                  class="w-full aspect-[2/3] object-cover"
+                />
+              ) : (
+                <div class="w-full aspect-[2/3] bg-gray-700 flex items-center justify-center">
+                  <span class="text-gray-400 text-xs">No image</span>
+                </div>
+              )}
+              <div class="p-2">
+                <p class="font-medium text-white">{person.name}</p>
+                <p class="text-sm text-gray-400">{person.character}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+    
+    <!-- 類似作品 -->
+    {similarMovies.length > 0 && (
+      <div class="px-8 md:px-16 pb-12 max-w-7xl mx-auto">
+        <h2 class="text-2xl font-bold text-white mb-6">類似作品</h2>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          {similarMovies.slice(0, 10).map(movie => (
+            <a href={`/movie/${movie.id}`} class="block">
+              <div class="bg-gray-800/30 rounded-lg overflow-hidden transition-transform hover:scale-105">
+                {movie.poster_path ? (
+                  <img 
+                    src={getImageUrl(movie.poster_path, 'w342')} 
+                    alt={movie.title}
+                    class="w-full aspect-[2/3] object-cover"
+                  />
+                ) : (
+                  <div class="w-full aspect-[2/3] bg-gray-700 flex items-center justify-center p-2">
+                    <span class="text-gray-400 text-xs text-center">{movie.title}</span>
+                  </div>
+                )}
+                <div class="p-2">
+                  <p class="font-medium text-white truncate">{movie.title}</p>
+                  {movie.release_date && (
+                    <p class="text-sm text-gray-400">
+                      {new Date(movie.release_date).getFullYear()}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    )}
+    
+    <!-- トレーラー埋め込み -->
+    {trailer && (
+      <div class="px-8 md:px-16 pb-12 max-w-7xl mx-auto">
+        <h2 class="text-2xl font-bold text-white mb-6">トレーラー</h2>
+        <div class="aspect-video w-full">
+          <iframe
+            src={`https://www.youtube.com/embed/${trailer.key}`}
+            title={`${movie.title} トレーラー`}
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+            class="w-full h-full rounded-lg"
+          ></iframe>
+        </div>
+      </div>
+    )}
+  </div>
+</MainLayout>

@@ -1,0 +1,43 @@
+---
+import Navbar from '@/layouts/Navbar.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = "映画とTVシリーズをストリーミング" } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title} | MovieFlix</title>
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#000000" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body class="bg-black text-white min-h-screen">
+    <Navbar />
+    
+    <main>
+      <slot />
+    </main>
+    
+    <footer class="bg-black/80 py-8 mt-12 border-t border-gray-800">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+          <p class="text-gray-400 text-sm">
+            &copy; {new Date().getFullYear()} MovieFlix - Astro + TypeScript
+          </p>
+          <p class="text-gray-600 text-xs mt-2">
+            このサイトは学習目的で作成されており、実際のサービスではありません。
+            映画データは <a href="https://www.themoviedb.org/" class="underline hover:text-gray-400">TMDb</a> のAPIを使用しています。
+          </p>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

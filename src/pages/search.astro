@@ -1,0 +1,79 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import SearchForm from '../components/search/SearchForm';
+import MovieCard from '../components/movie/MovieCard';
+import { searchMovies } from '../lib/api/tmdb';
+import "../styles/global.css";
+
+// URLパラメータから検索クエリを取得
+const query = Astro.url.searchParams.get('q') || '';
+let searchResults: {
+  page: number;
+  results: any[];
+  total_pages: number;
+  total_results: number;
+} = {
+  page: 1,
+  results: [],
+  total_pages: 0,
+  total_results: 0
+};
+
+if (query) {
+  try {
+    searchResults = await searchMovies(query);
+  } catch (error) {
+    console.error('検索に失敗しました:', error);
+  }
+}
+---
+
+<MainLayout title={query ? `${query} の検索結果` : '検索'}>
+  <div class="pt-24 px-8 md:px-16 max-w-7xl mx-auto">
+    <h1 class="text-3xl font-bold text-white mb-8">映画を検索</h1>
+    
+    <!-- Reactコンポーネントとして実装した検索フォーム -->
+    <div class="mb-12">
+      <SearchForm initialQuery={query} client:load />
+    </div>
+    
+    <!-- 検索結果 -->
+    {query && (
+      <div>
+        <h2 class="text-xl text-white mb-4">
+          "{query}" の検索結果 ({searchResults.results.length} 件)
+        </h2>
+        
+        {searchResults.results.length > 0 ? (
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {searchResults.results.map((movie) => (
+              <MovieCard 
+                movie={movie}
+                onClick={() => {}}
+                client:visible
+              />
+            ))}
+          </div>
+        ) : (
+          <p class="text-gray-400">
+            検索結果が見つかりませんでした。別のキーワードで試してみてください。
+          </p>
+        )}
+      </div>
+    )}
+  </div>
+
+  <script>
+    // クライアントサイドでの映画カードクリックハンドラ
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.card').forEach(card => {
+        card.addEventListener('click', (e) => {
+          const movieId = card.getAttribute('data-movie-id');
+          if (movieId) {
+            window.location.href = `/movie/${movieId}`;
+          }
+        });
+      });
+    });
+  </script>
+</MainLayout>
