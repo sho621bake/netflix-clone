@@ -3,7 +3,7 @@ import MainLayout from '../layouts/MainLayout.astro';
 import SearchForm from '@/components/search/SearchForm';
 import MovieCard from '../components/movie/MovieCard';
 import { searchMovies } from '../lib/api/tmdb';
-import "../styles/global.css";
+import "@/styles/global.css";
 
 // URLパラメータから検索クエリを取得
 const query = Astro.url.searchParams.get('q') || '';
