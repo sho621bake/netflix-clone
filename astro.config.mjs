@@ -5,7 +5,7 @@ import react from "@astrojs/react";
 
 import tailwindcss from "@tailwindcss/vite";
 
-import node from "@astrojs/node";
+// import node from "@astrojs/node";
 
 import vercel from "@astrojs/vercel";
 
@@ -23,7 +23,8 @@ export default defineConfig({
     plugins: [tailwindcss()],
   },
 
-  adapter: node({
-    mode: "standalone",
-  }),
+  // adapter: node({
+  //   mode: "standalone",
+  // }),
+  adapter: vercel(),
 });
