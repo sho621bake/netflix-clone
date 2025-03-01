@@ -1,9 +1,6 @@
 ---
 import MainLayout from '../../layouts/MainLayout.astro';
-import MovieRow from '../../components/movie/MovieRow';
-import { Button } from '../../components/ui/button';
-import { getMovieDetails, getImageUrl, getMoviesByCategory } from '../../lib/api/tmdb';
-import { Play, Plus, ThumbsUp } from 'lucide-react';
+import { getMovieDetails, getImageUrl } from '../../lib/api/tmdb';
 import "@/styles/global.css";
 
 // URLパラメータから映画IDを取得
