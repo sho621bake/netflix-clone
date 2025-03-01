@@ -2,7 +2,6 @@ import React from "react";
 import { Card, CardContent } from "../ui/card";
 import type { Movie } from "../../types/movie";
 import { getImageUrl } from "../../lib/api/tmdb";
-import { Image } from "astro:assets";
 
 interface MovieCardProps {
   movie: Movie;
