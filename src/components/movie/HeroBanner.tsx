@@ -45,7 +45,7 @@ export default function HeroBanner({ movie }: HeroBannerProps) {
             className="bg-gray-500/40 text-white border-none hover:bg-gray-500/60"
           >
             <Info className="mr-2 h-4 w-4" />
-            詳細情報
+            <a href={`/movie/${movie.id}`}>詳細情報</a>
           </Button>
         </div>
       </div>
